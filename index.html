@@ -30,6 +30,11 @@
       const CardTypes = [
         { name: "bird", image: "/img/animals/bird.png" },
         { name: "cat", image: "/img/animals/cat.png" },
+        { name: "crab", image: "/img/animals/crab.png" },
+        { name: "fish", image: "/img/animals/fish.png" },
+        { name: "duck", image: "/img/animals/duck.png" },
+        { name: "lion", image: "/img/animals/lion.png" },
+        { name: "turtle", image: "/img/animals/turtle.png" },
       ];
 
       const shuffleCards = () => {
@@ -42,7 +47,8 @@
 
         data: {
           cards: [],
-          showSplash: false
+          showSplash: false,
+          flipBackTimer: null
         },
 
         methods: {
@@ -58,9 +64,90 @@
             this.cards = cards;
           },
 
+          flippedCards() {
+            return _.filter(this.cards, card => card.flipped);
+          },
+
+          sameFlippedCard() {
+            const flippedCards = this.flippedCards();
+            if (flippedCards.length == 2) {
+              if (flippedCards[0].name == flippedCards[1].name)
+                return true;
+            }
+          },
+
+          setCardFounds() {
+            _.each(this.cards, (card) => {
+              if (card.flipped)
+                card.found = true;
+            });
+          },
+
+          checkAllFound() {
+            const foundCards = _.filter(this.cards, card => card.found);
+            if (foundCards.length == this.cards.length) {
+              return true;
+            }
+          },
+
+          startGame() {
+          },
+
+          finishGame() {
+            this.showSplash = true;
+          },
+
           flipCard(card) {
-            //implement this method :)
+            if (card.found || card.flipped) return;
+
+            if (!this.started) {
+              this.startGame();
+            }
+
+            const flipCount = this.flippedCards().length;
+            if (flipCount == 0) {
+              card.flipped = !card.flipped;
+            }
+            else if (flipCount == 1) {
+              card.flipped = !card.flipped;
+              this.turns += 1;
+
+              if (this.sameFlippedCard()) {
+                // Match!
+                this.flipBackTimer = setTimeout( ()=> {
+                  this.clearFlipBackTimer();
+                  this.setCardFounds();
+                  this.clearFlips();
+
+                  if (this.checkAllFound()) {
+                    this.finishGame();
+                  }
+
+                }, 200);
+              }
+              else {
+                // Wrong match
+                this.flipBackTimer = setTimeout( ()=> {
+                  this.clearFlipBackTimer();
+                  this.clearFlips();
+                }, 1000);
+              }
+            }
+          },
+
+          clearFlips() {
+            _.map(this.cards, card => card.flipped = false);
+          },
+
+
+          clearFlipBackTimer() {
+            clearTimeout(this.flipBackTimer);
+            this.flipBackTimer = null;
           }
+        },
+
+        created() {
+          this.resetGame();
         }
       });
     </script>
